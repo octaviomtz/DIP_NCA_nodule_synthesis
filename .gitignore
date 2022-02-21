@@ -1,0 +1,3 @@
+*.npz
+*_inter*
+*__pycache__*
