@@ -1,0 +1,15 @@
+path_dest: 'ca_nodules_generated/'
+nodules_sorted_path: '/content/drive/MyDrive/KCL/cellular automata v2/nodules_sorted3.npz'
+files_sorted_path: '/content/drive/MyDrive/KCL/cellular automata v2/files_sorted3.npy'
+CHANNEL_N: 16        # Number of CA state channels
+TARGET_PADDING: 16   # Number of pixels used to pad the target image border
+TARGET_SIZE: 40
+BATCH_SIZE: 2 #  WARNING changed from 8 to 4
+POOL_SIZE: 64 # WARNING changed from 1024 to 64
+CELL_FIRE_RATE: 0.5
+USE_PATTERN_POOL: 0
+DAMAGE_N: 0
+lr: 2e-3
+TRAIN_EPOCHS: 5 # 1000
+NDL_OFFSET: 1170 
+NDL_NUM: 5

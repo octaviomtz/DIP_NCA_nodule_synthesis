@@ -1,3 +1,7 @@
 *.npz
 *_inter*
 *__pycache__*
+outputs/
+train_logB/
+*.raw*
+*checkpoint*
