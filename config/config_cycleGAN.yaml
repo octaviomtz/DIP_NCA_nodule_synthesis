@@ -1,0 +1,15 @@
+epoch: 0
+epoch_done: -1 # used to continue training from a pretrained network
+n_epochs: 401 #original 200 then 401
+batchsize: 8
+lr: 0.0002
+decay_epoch: 5 # original 100
+size: 32
+input_nc: 1 # original 3
+output_nc: 1 # original 3
+exclude_this_and_previous: 9 # We need to exclude two folds and save the other gan-created in their corresponding folder
+
+path_source: '/data/OMM/Datasets/LIDC_other_formats/LUNA_inpainted_cubes_for_GAN_v2/'
+#path_dest = f'/data/OMM/project results/Feb 20 19 - CycleGan clean/deep nodule prior luna v3 - cubes size 32 coefficients - 10 folds fold{cfg.exclude_this_and_previous}/' 
+path_dest: f'/cycleGAN_10_folds_fold/'
+path_quality: '/data/OMM/Datasets/LIDC_other_formats/LUNA_inpainted_cubes_for_GAN_v2/versions2D/qualitative assessment 1 (passed OM)/'

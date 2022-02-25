@@ -5,3 +5,4 @@ outputs/
 train_logB/
 *.raw*
 *checkpoint*
+*_old.*
