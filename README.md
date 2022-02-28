@@ -7,13 +7,19 @@ python process_lungs_and_segmentations.py
 ```
 
 #### Nodule inpainting with deep image prior
+Performs inpaiting on lung nodules using 2D convolutions
 ```bash
-python 
+python inpainting.py
 ```
 
 #### Nodule synthesis with neural cellular automata
 ```bash
 python neural_cellular_automata.py
+```
+
+#### nodule growing with image-to-image translation (cycleGAN)
+```bash
+python cycleGAN.py
 ```
 
 #### False positive Reduction
