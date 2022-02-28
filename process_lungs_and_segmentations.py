@@ -7,7 +7,7 @@ import scipy
 from skimage.morphology import ball, dilation
 
 import SimpleITK as sitk
-import pylidc as pl
+import pylidc as pl 
 from pylidc.utils import consensus
 
 from utils.preprocess import (load_itk_image, resample_scan_sitk, 
