@@ -13,8 +13,6 @@ import datetime
 from tqdm import tqdm
 import os
 from itertools import product
-# from datasets import ImageDataset
-# import visdom
 
 import torch
 import torchvision.transforms as transforms
@@ -132,7 +130,6 @@ def main(cfg: DictConfig):
 
     print(f'fold_excluded = {fold_excluded}')
     print(f'fold_included = {fold_included}')
-
 
     # ### main
     fold = 1
