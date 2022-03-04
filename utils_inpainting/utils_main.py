@@ -1,6 +1,8 @@
 import os
 import numpy as np
 import SimpleITK as sitk
+from scipy import sparse
+from tqdm import tqdm
 
 def load_itk_image(filename):
     itkimage = sitk.ReadImage(filename)
@@ -51,6 +53,18 @@ def make3d_from_sparse_v2(path):
     scan3d = np.swapaxes(scan3d,1,0)
     return scan3d
 
+def make3d_from_sparse(path):
+    slices_all = os.listdir(path)
+    slices_all = np.sort(slices_all)
+    for idx, i in tqdm(enumerate(slices_all), desc='reading slices', total=len(slices_all)):
+        sparse_matrix = sparse.load_npz(f'{path}{i}')
+        array2d = np.asarray(sparse_matrix.todense())
+        if idx == 0: 
+            scan3d = array2d
+            continue
+        scan3d = np.dstack([scan3d,array2d])
+    return scan3d
+
 def median_center(segmentation, label = 1):
     z,y,x = np.where(segmentation == label)
     zz = int(np.median(z))
@@ -85,7 +99,7 @@ def read_slices3D_v4(path_data_, path_seg_, ii_ids):
     return vol, mask_maxvol, mask_consensus, mask_lungs
 
 def small_versions(vol_, mask_maxvol_, mask_consensus_, mask_lungs_):
-    z,y,x = np.where(mask_lungs==1)
+    z,y,x = np.where(mask_lungs_==1) # originally mask_lungs_ was used instead of mask_lungs
     z_min = np.min(z); z_max = np.max(z)
     y_min = np.min(y); y_max = np.max(y)
     x_min = np.min(x); x_max = np.max(x)

@@ -10,7 +10,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 import pdb
-from utils_omm.clr import CyclicLR # OMM
+# from utils_omm.clr import CyclicLR 
 
 def crop_image(img, d=32):
     '''Make dimensions divisible by `d`'''
@@ -427,7 +427,8 @@ def optimize_v18(optimizer_type, parameters, closure, LR, num_iter, show_every, 
             total_loss.append(total_loss_temp)
             
             # Restart if bad initialization
-            if j == 200 and np.sum(np.diff(total_loss)==0) > 50:
+            print(type(total_loss))
+            if j == 200 and np.sum(np.diff(total_loss.cpu())==0) > 50:
                 """if the network is not learning (bad initialization) Restart"""
                 restart = True
                 return total_loss, images_generated, j_best, restart

@@ -7,3 +7,5 @@ train_logB/
 *checkpoint*
 *_old.*
 *-Copy1*
+*_temp*
+example.log

@@ -34,7 +34,8 @@ dim_div_by = 64
 torch.cuda.empty_cache()
 SKIP_IDX = -1
 
-path_seg =  f'/data/OMM/Datasets/LUNA/seg-lungs-LUNA16/'
+path_drive = '/content/drive/MyDrive/Datasets/LUNA16/'
+path_seg = f'{path_drive}seg-lungs-LUNA16/'
 path_data = f'/data/OMM/Datasets/LUNA/candidates/'
 path_img_dest = '/data/OMM/project results/Feb 5 19 - Deep image prior/dip luna v2/'
 ids = os.listdir(path_data)
