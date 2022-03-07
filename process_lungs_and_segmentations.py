@@ -14,12 +14,13 @@ from utils.preprocess import (load_itk_image, resample_scan_sitk,
                             normalizePatches, worldToVoxelCoord)
 
 path_drive = '/content/drive/MyDrive/Datasets/LUNA16/'
+path_seg = f'{path_drive}seg-lungs-LUNA16/'
 path_scans = f'{path_drive}/subset0_incomplete/subset0/'
 data_dir = './data/'
 out_path = './candidates_process_lungs_and_segm/'
 ff = os.listdir(path_scans)
 
-df = pd.read_csv(f'{path_drive}annotations.csv') # CHECK THE CORRECT FILE
+# df = pd.read_csv(f'{path_drive}annotations.csv') # CHECK THE CORRECT FILE
 df = pd.read_csv(f'{path_drive}annotations/annotations.csv') # CHECK THE CORRECT FILE
 annotations_df = pd.read_csv(f'{path_drive}annotations/annotations.csv') # CHECK THE CORRECT FILE
 
@@ -40,7 +41,7 @@ for each_subset in range(10):
     columns_plus_new_coords = np.append(df.columns.values,['coordZ_cands_class1_resampled', 'coordY_cands_class1_resampled', 'coordX_cands_class1_resampled'])
     columns_plus_new_coords_class1 = np.append(cands_df.columns.values,['coordX_resamp', 'coordY_resamp', 'coordZ_resamp'])
 
-    for jj, XX in tqdm(enumerate(subset_series_ids)):
+    for jj, XX in tqdm(enumerate(subset_series_ids), total=len(subset_series_ids)):
 
         df_lidc_new = pd.DataFrame(columns=columns_plus_new_coords)
         df_cands_class1 = pd.DataFrame(columns=columns_plus_new_coords_class1)
@@ -54,19 +55,19 @@ for each_subset in range(10):
         numpyImage_resampled = resample_scan_sitk(numpyImage, numpySpacing, numpyImage_shape, new_spacing=new_spacing)
         
         # get the correspponding lung segmentation
-        # path_segment_lungs = f'{data_seg}{subset_series_ids[jj]}.mhd'
-        # segment_lungs, seglung_orig, seglung_spacing = load_itk_image(path_segment_lungs)
-        # assert (numpyOrigin - seglung_orig < .1).all()
-        # assert (numpySpacing - seglung_spacing < .1).all()
-        # segment_lungs_resampled = resample_scan_sitk(segment_lungs, numpySpacing, numpyImage_shape, new_spacing=new_spacing)
+        path_segment_lungs = f'{path_seg}{subset_series_ids[jj]}.mhd'
+        segment_lungs, seglung_orig, seglung_spacing = load_itk_image(path_segment_lungs)
+        assert (numpyOrigin - seglung_orig < .1).all()
+        assert (numpySpacing - seglung_spacing < .1).all()
+        segment_lungs_resampled = resample_scan_sitk(segment_lungs, numpySpacing, numpyImage_shape, new_spacing=new_spacing)
 
         # normalize
         numpyImage_normalized = normalizePatches(numpyImage_resampled)
 
         # save the segmented lungs
-        # numpyImage_segmented = numpyImage_normalized * (segment_lungs_resampled>0)
+        numpyImage_segmented = numpyImage_normalized * (segment_lungs_resampled>0)
         if not os.path.exists(f'{out_path}{subset_series_ids[jj]}/lungs_segmented'): os.makedirs(f'{out_path}{subset_series_ids[jj]}/lungs_segmented')
-        # np.savez_compressed(f'{out_path}{subset_series_ids[jj]}/lungs_segmented/lungs_segmented.npz',numpyImage_segmented)
+        np.savez_compressed(f'{out_path}{subset_series_ids[jj]}/lungs_segmented/lungs_segmented.npz',numpyImage_segmented)
 
         # go through all candidates that are in this image
         # sort to make sure we have all the trues (for prototyping only)
@@ -87,7 +88,7 @@ for each_subset in range(10):
         curr_cands_class1 = curr_cands.loc[curr_cands['class']==1]
         
         for idx_row, curr_cand in curr_cands_class1.iterrows():
-            print(curr_cand)
+            # print(curr_cand)
             # first need to find the corresponding column in the annotations csv (assuming its the closest 
             # nodule to  the current candidate)
             # extract the annotations for the scan id of our current candidate
