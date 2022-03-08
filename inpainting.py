@@ -2,8 +2,6 @@ import argparse
 import matplotlib.pyplot as plt
 import os
 import numpy as np
-import torch
-import torch.optim
 from copy import copy, deepcopy
 import time
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
@@ -14,9 +12,12 @@ import matplotlib.patches as patches
 from skimage.morphology import watershed
 from skimage.feature import peak_local_max
 from scipy import ndimage
-from torch.autograd import Variable
-from torch.autograd import Variable
 import SimpleITK as sitk
+import gc
+
+import torch
+import torch.optim
+from torch.autograd import Variable
 
 from models.resnet import ResNet
 from models.unet import UNet
@@ -25,19 +26,21 @@ from utils_inpainting.utils_main import load_itk_image, resample_scan_sitk, read
 from utils_inpainting.inpainting_nodules_functions import (pad_if_vol_too_small, erode_and_split_mask, 
                                                             nodule_right_or_left_lung, get_box_coords_per_block,
                                                             get_block_if_ndl_list)
-from utils_inpainting.common_utils import optimize_v18, get_noise, get_params, np_to_torch                                                          
+from utils_inpainting.common_utils import optimize_ndls, get_noise, get_params, np_to_torch                                                          
 
 dtype = torch.cuda.FloatTensor
 PLOT = True
 imsize = -1
 dim_div_by = 64
 torch.cuda.empty_cache()
-SKIP_IDX = -1
+SKIP_IDX = 11
 
 path_drive = '/content/drive/MyDrive/Datasets/LUNA16/'
 path_seg = f'{path_drive}seg-lungs-LUNA16/'
-path_data = f'/data/OMM/Datasets/LUNA/candidates/'
-path_img_dest = '/data/OMM/project results/Feb 5 19 - Deep image prior/dip luna v2/'
+# path_data = f'/data/OMM/Datasets/LUNA/candidates/'
+path_data = f'./candidates_process_lungs_and_segm/'
+# path_img_dest = '/data/OMM/project results/Feb 5 19 - Deep image prior/dip luna v2/'
+path_img_dest = f'{path_drive}inpainted_nodules/'
 ids = os.listdir(path_data)
 ids = np.sort(ids)
 
@@ -46,7 +49,7 @@ OPT_OVER = 'net'
 OPTIMIZER = 'adam'
 INPUT = 'noise'
 input_depth = 96*2 # 
-num_iter = 5001 
+EPOCHS = 5001 
 param_noise = True
 show_every = 500
 reg_noise_std = 0.3
@@ -69,16 +72,15 @@ def closure():
     if  PLOT:
         out_np = out.detach().cpu().numpy()[0]
         image_to_save = out_np
-        images_all.append(image_to_save)
+        # images_all.append(image_to_save)
     i += 1    
-    return total_loss, images_all
+    return total_loss, out_np#, images_all
 
 for idx_name, name in enumerate(ids):
 
     if idx_name < SKIP_IDX: continue
-    print(idx_name)
+    print('idx_name: ', idx_name)
 
-    # name = '1.3.6.1.4.1.14519.5.2.1.6279.6001.179049373636438705059720603192'
     vol, mask_maxvol, mask_consensus, mask_lungs = read_slices3D_v4(path_data, path_seg, name)
     maxvol0 = np.where(mask_maxvol==1)
     mask_maxvol_and_lungs = deepcopy(mask_lungs)
@@ -93,6 +95,8 @@ for idx_name, name in enumerate(ids):
     block2_list, block2_mask_list, block2_mask_maxvol_and_lungs_list, block2_mask_lungs_list, clus_names2, box_coords2 = get_box_coords_per_block(coord_min_side2, coord_max_side2, 2, slice_middle, xmed_1, ymed_1, xmed_2, ymed_2, vol_small, mask_maxvol_small, mask_maxvol_and_lungs_small, mask_lungs_small, normalize=False)
     blocks_ndl, blocks_ndl_mask, block_mask_maxvol_and_lungs, blocks_ndl_lungs, blocks_ndl_names, box_coords = get_block_if_ndl_list(block1_list, block2_list, block1_mask_list, block2_mask_list, block1_mask_maxvol_and_lungs_list, block2_mask_maxvol_and_lungs_list, block1_mask_lungs_list, block2_mask_lungs_list, clus_names1, clus_names2, box_coords1, box_coords2)
     del vol_small, mask_maxvol_small, mask_consensus, mask_lungs_small
+    gc.collect()
+
     for (block, block_mask, block_maxvol_and_lungs, block_lungs, block_name, box_coord) in zip(blocks_ndl, blocks_ndl_mask, block_mask_maxvol_and_lungs, blocks_ndl_lungs, blocks_ndl_names, box_coords): 
         torch.cuda.empty_cache()
         print(block_name)
@@ -141,9 +145,9 @@ for idx_name, name in enumerate(ids):
             net_input_saved = net_input.detach().clone()
             noise = net_input.detach().clone()
             p = get_params(OPT_OVER, net, net_input)
-            mse_error, images_generated_all, best_iter, restart = optimize_v18(OPTIMIZER, p, closure, LR, num_iter, show_every, path_img_dest, restart, annealing=True, lr_finder_flag=False)
+            mse_error, images_generated_all, best_iter, restart = optimize_ndls(OPTIMIZER, p, closure, LR, EPOCHS, show_every, path_img_dest, restart, annealing=True, lr_finder_flag=False)
             mse_error = np.squeeze(mse_error)
-            mse_error = [i.detach().cpu().numpy() for i in mse_error]
+            # mse_error = [i.detach().cpu().numpy() for i in mse_error]
             # mse_error_all.append(mse_error)
             # mse_error_last = mse_error[-1].detach().cpu().numpy()
 
@@ -166,10 +170,10 @@ for idx_name, name in enumerate(ids):
         image_last.tofile(f'{path_img_dest}arrays/last/{name}_{block_name}.raw')
         img_np.tofile(f'{path_img_dest}arrays/orig/{name}_{block_name}.raw')
         np.savez_compressed(f'{path_img_dest}arrays/masks/{name}_{block_name}',block_maxvol_and_lungs)
-        np.savez_compressed(f'{path_img_dest}arrays/masks nodules/{name}_{block_name}',block_mask)
-        np.savez_compressed(f'{path_img_dest}arrays/masks lungs/{name}_{block_name}',block_lungs)
-        np.save(f'{path_img_dest}mse error curves inpainting/{name}_{block_name}.npy',mse_error)
-        np.save(f'{path_img_dest}inpainting times/{name}_{block_name}_{int(stop-start)}s.npy',stop-start)
+        np.savez_compressed(f'{path_img_dest}arrays/masks_nodules/{name}_{block_name}',block_mask)
+        np.savez_compressed(f'{path_img_dest}arrays/masks_lungs/{name}_{block_name}',block_lungs)
+        np.save(f'{path_img_dest}mse_error_curves_inpainting/{name}_{block_name}.npy',mse_error)
+        np.save(f'{path_img_dest}inpainting_times/{name}_{block_name}_{int(stop-start)}s.npy',stop-start)
         np.save(f'{path_img_dest}box_coords/{name}_{block_name}.npy', box_coord)
         # torch.save({'epoch': len(mse_error), 'model_state_dict': net.state_dict(),
         #    'LR': LR,'loss': mse_error, 'net_input_saved': net_input_saved}, 
