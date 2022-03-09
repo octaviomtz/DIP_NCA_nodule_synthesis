@@ -482,7 +482,7 @@ def optimize_ndls(optimizer_type, parameters, closure, LR, EPOCHS, show_every, p
             j_best = 0
             
         optimizer.zero_grad()
-        total_loss_temp, image_generated_temp = closure()
+        total_loss_temp, image_generated_temp = closure(j)
         total_loss.append(total_loss_temp.detach().cpu().numpy())
         
         # Restart if bad initialization

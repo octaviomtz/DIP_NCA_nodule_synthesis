@@ -1,0 +1,14 @@
+path_drive: '/content/drive/MyDrive/Datasets/LUNA16/'
+path_seg: '/content/drive/MyDrive/Datasets/LUNA16/seg-lungs-LUNA16/'
+path_data: '/candidates_process_lungs_and_segm/'
+path_img_dest: '/content/drive/MyDrive/Datasets/LUNA16/inpainted_nodules/'
+
+PLOT: True
+SKIP_IDX: 11
+OPT_OVER: 'net'
+INPUT: 'noise'
+INPUT_DEPTH: 192
+EPOCHS: 5001 
+param_noise: True
+show_every: 500
+reg_noise_std: 0.3
