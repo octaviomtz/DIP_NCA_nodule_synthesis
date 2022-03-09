@@ -15,14 +15,13 @@ Main steps of the study "Patient-Specific 3d Cellular Automata Nodule Growth Syn
 pip install -r requirements_develop.txt
 python process_lungs_and_segmentations.py
 ```
-
 ```diff
 - INPUTS:
 - Path to LUNA16 dataset.
 - Path to LUNA16 candidates: candidates_V2.csv
 - Path to LUNA16 annotations: annotations.csv
 - Path to LUNA16 segmentations: seg-lungs-LUNA16/ 
-+ OUTPUTS (for each scan):
++ OUTPUTS (preprocessed images for each scan):
 + lungs_segmented
 + processed_images (cluster_id_images)
 + consensus_masks
@@ -30,19 +29,31 @@ python process_lungs_and_segmentations.py
 ```
 
 #### 2. Nodule inpainting with deep image prior
-Performs inpaiting on lung nodules using 2D convolutions
+Performs inpaiting on lung nodules on lung blocks (96x160x96) using 2D convolutions
 ```bash
 pip install -r requirements_inpainting.txt
 python inpainting.py
 ```
+```diff
+- INPUTS:
+- Preprocessed images for each scan (from 1.).
+- Path to LUNA16 segmentations: seg-lungs-LUNA16/ 
++ OUTPUTS (for lung block of 96x160x96):
++ arrays/last/{id_series}_{lungL/R}_{ndls_n}
++ arrays/orig/{id_series}_{lungL/R}_{ndls_n}
++ arrays/masks/{id_series}_{lungL/R}_{ndls_n}
++ arrays/masks_nodules/{id_series}_{lungL/R}_{ndls_n}
++ arrays/masks_lungs/{id_series}_{lungL/R}_{ndls_n}
++ box_coords/{id_series}_{lungL/R}_{ndls_n} (coords containing the ndl)
+```
 
-#### Nodule synthesis with neural cellular automata
+#### TO DO Nodule synthesis with neural cellular automata
 ```bash
 pip install -r requirements.txt
 python neural_cellular_automata.py
 ```
 
-#### nodule growing with image-to-image translation (cycleGAN)
+#### TO DO nodule growing with image-to-image translation (cycleGAN)
 ```bash
 pip install -r requirements_inpainting.txt
 python cycleGAN.py

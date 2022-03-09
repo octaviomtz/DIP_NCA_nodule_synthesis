@@ -1,4 +1,3 @@
-path_drive: '/content/drive/MyDrive/Datasets/LUNA16/'
 path_seg: '/content/drive/MyDrive/Datasets/LUNA16/seg-lungs-LUNA16/'
 path_data: '/candidates_process_lungs_and_segm/'
 path_img_dest: '/content/drive/MyDrive/Datasets/LUNA16/inpainted_nodules/'
