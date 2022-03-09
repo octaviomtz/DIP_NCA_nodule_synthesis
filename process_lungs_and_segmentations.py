@@ -10,29 +10,36 @@ import SimpleITK as sitk
 import pylidc as pl 
 from pylidc.utils import consensus
 
+import hydra
+from omegaconf import DictConfig, OmegaConf
+import logging
+
 from utils.preprocess import (load_itk_image, resample_scan_sitk, 
                             normalizePatches, worldToVoxelCoord)
 
-def main():
-    path_drive = '/content/drive/MyDrive/Datasets/LUNA16/'
-    path_seg = f'{path_drive}seg-lungs-LUNA16/'
-    path_scans = f'{path_drive}/subsets/subset0/'
-    data_dir = './data/'
-    out_path = './candidates_process_lungs_and_segm/'
-    ff = os.listdir(path_scans)
+@hydra.main(config_path="config", config_name="config_preprocess.yaml")
+def main(cfg: DictConfig):
+    # HYDRA
+    log = logging.getLogger(__name__)
+    log.info(OmegaConf.to_yaml(cfg))
+    path_orig = hydra.utils.get_original_cwd()
+    # PATHS
+    path_seg = f'{cfg.path_drive}seg-lungs-LUNA16/'
+    data_dir = f'{path_orig}/{cfg.data_dir}'
+    out_path = f'{path_orig}/{cfg.out_path}'
+    # ff = os.listdir(path_scans)
 
-    # df = pd.read_csv(f'{path_drive}annotations.csv') # CHECK THE CORRECT FILE
-    df = pd.read_csv(f'{path_drive}annotations/annotations.csv') # CHECK THE CORRECT FILE
-    annotations_df = pd.read_csv(f'{path_drive}annotations/annotations.csv') # CHECK THE CORRECT FILE
-
-    cands_df  = pd.read_csv(f'{path_drive}candidates_V2.csv')
+    # df = pd.read_csv(f'{path_drive}annotations.csv')
+    df = pd.read_csv(f'{cfg.path_drive}annotations/annotations.csv')
+    annotations_df = pd.read_csv(f'{cfg.path_drive}annotations/annotations.csv')
+    cands_df  = pd.read_csv(f'{cfg.path_drive}candidates_V2.csv')
     print(df.shape, cands_df.shape, annotations_df.shape)
-    df.head()
+    # df.head()
 
     for each_subset in range(10):
-        curr_dir = f'subset{each_subset}'
-
-        if not os.path.exists(out_path + curr_dir): os.makedirs(out_path + curr_dir)
+        path_scans = f'{cfg.path_drive}/subsets/subset{each_subset}/'        
+        if not os.path.exists(out_path + f'subset{each_subset}'): 
+            os.makedirs(out_path + f'subset{each_subset}')
 
         subset_files = os.listdir(path_scans)
         subset_series_ids = np.unique(np.asarray([subset_files[ll][:-4:] for ll in range(len(subset_files))]))
@@ -42,13 +49,15 @@ def main():
         columns_plus_new_coords = np.append(df.columns.values,['coordZ_cands_class1_resampled', 'coordY_cands_class1_resampled', 'coordX_cands_class1_resampled'])
         columns_plus_new_coords_class1 = np.append(cands_df.columns.values,['coordX_resamp', 'coordY_resamp', 'coordZ_resamp'])
 
-        for jj, XX in tqdm(enumerate(subset_series_ids), total=len(subset_series_ids)):
-
+        for series_id_idx, series_id in tqdm(enumerate(subset_series_ids), total=len(subset_series_ids)):
+            # skip already proprocessed files
+            if series_id_idx < cfg.skip_previous: continue
+            
             df_lidc_new = pd.DataFrame(columns=columns_plus_new_coords)
             df_cands_class1 = pd.DataFrame(columns=columns_plus_new_coords_class1)
-            image_file = path_scans + subset_series_ids[jj] + '.mhd'
+            image_file = path_scans + series_id + '.mhd'
             numpyImage, numpyOrigin, numpySpacing = load_itk_image(image_file)
-            curr_cands = cands_df.loc[cands_df['seriesuid'] == subset_series_ids[jj]].reset_index(drop=True)
+            curr_cands = cands_df.loc[cands_df['seriesuid'] == series_id].reset_index(drop=True)
 
             # resample original image
             new_spacing = [1,1,1]
@@ -56,7 +65,7 @@ def main():
             numpyImage_resampled = resample_scan_sitk(numpyImage, numpySpacing, numpyImage_shape, new_spacing=new_spacing)
             
             # get the correspponding lung segmentation
-            path_segment_lungs = f'{path_seg}{subset_series_ids[jj]}.mhd'
+            path_segment_lungs = f'{path_seg}{series_id}.mhd'
             segment_lungs, seglung_orig, seglung_spacing = load_itk_image(path_segment_lungs)
             assert (numpyOrigin - seglung_orig < .1).all()
             assert (numpySpacing - seglung_spacing < .1).all()
@@ -67,8 +76,8 @@ def main():
 
             # save the segmented lungs
             numpyImage_segmented = numpyImage_normalized * (segment_lungs_resampled>0)
-            if not os.path.exists(f'{out_path}{subset_series_ids[jj]}/lungs_segmented'): os.makedirs(f'{out_path}{subset_series_ids[jj]}/lungs_segmented')
-            np.savez_compressed(f'{out_path}{subset_series_ids[jj]}/lungs_segmented/lungs_segmented.npz',numpyImage_segmented)
+            if not os.path.exists(f'{out_path}{series_id}/lungs_segmented'): os.makedirs(f'{out_path}{series_id}/lungs_segmented')
+            np.savez_compressed(f'{out_path}{series_id}/lungs_segmented/lungs_segmented.npz',numpyImage_segmented)
 
             # go through all candidates that are in this image
             # sort to make sure we have all the trues (for prototyping only)
@@ -81,7 +90,7 @@ def main():
 
             # query the LIDC images HERE WE JUST USE THE FIRST ONE!!
             idx_scan = 0 
-            scan = pl.query(pl.Scan).filter(pl.Scan.series_instance_uid == subset_series_ids[jj])[idx_scan] 
+            scan = pl.query(pl.Scan).filter(pl.Scan.series_instance_uid == series_id)[idx_scan] 
             nods = scan.cluster_annotations() # get the annotations for all nodules in this scan
             #print(np.shape(nods))
 
@@ -111,7 +120,7 @@ def main():
                 # SAVE DATAFRAMES (the pylidc DF from the nodules in LUNA)
                 threshold_coord_found  = 4
                 # seriesuid might include several nodules, if its coords are close to the coords in annotations then save
-                df_series_all_nodules = df.loc[df['seriesuid']==subset_series_ids[jj]]
+                df_series_all_nodules = df.loc[df['seriesuid']==series_id]
                 df_series_number_nodules = np.unique(df_series_all_nodules['cluster_id'].values)
 
                 for idxx, i_number_nodule in enumerate(df_series_number_nodules):
@@ -169,18 +178,18 @@ def main():
             one_segmentation_maxvol_resampled = resample_scan_sitk(one_segmentation_maxvol, numpySpacing, numpyImage_shape, new_spacing, sitk.sitkNearestNeighbor)
             labelledNods_resampled = resample_scan_sitk(labelledNods, numpySpacing, numpyImage_shape, new_spacing, sitk.sitkNearestNeighbor)
 
-            if not os.path.exists(f'{out_path}{subset_series_ids[jj]}/consensus_masks'): os.makedirs(f'{out_path}{subset_series_ids[jj]}/consensus_masks')
-            if not os.path.exists(f'{out_path}{subset_series_ids[jj]}/maxvol_masks'): os.makedirs(f'{out_path}{subset_series_ids[jj]}/maxvol_masks')
-            if not os.path.exists(f'{out_path}{subset_series_ids[jj]}/cluster_id_images'): os.makedirs(f'{out_path}{subset_series_ids[jj]}/cluster_id_images')
+            if not os.path.exists(f'{out_path}{series_id}/consensus_masks'): os.makedirs(f'{out_path}{series_id}/consensus_masks')
+            if not os.path.exists(f'{out_path}{series_id}/maxvol_masks'): os.makedirs(f'{out_path}{series_id}/maxvol_masks')
+            if not os.path.exists(f'{out_path}{series_id}/cluster_id_images'): os.makedirs(f'{out_path}{series_id}/cluster_id_images')
 
             for i_sparse, (one_seg_consen, one_seg_max, labelNods) in enumerate(zip(one_segmentation_consensus_resampled, one_segmentation_maxvol_resampled, labelledNods_resampled)):
                 sparse_matrix_one_segmentation_consensus = scipy.sparse.csc_matrix(one_seg_consen)
                 sparse_matrix_one_segmentation_maxvol = scipy.sparse.csc_matrix(one_seg_max)
                 sparse_matrix_labelledNods = scipy.sparse.csc_matrix(labelNods)
 
-                scipy.sparse.save_npz(f'{out_path}{subset_series_ids[jj]}/consensus_masks/slice_{i_sparse:04d}.npz', sparse_matrix_one_segmentation_consensus, compressed=True)
-                scipy.sparse.save_npz(f'{out_path}{subset_series_ids[jj]}/maxvol_masks/slice_m_{i_sparse:04d}.npz', sparse_matrix_one_segmentation_maxvol, compressed=True)
-                scipy.sparse.save_npz(f'{out_path}{subset_series_ids[jj]}/cluster_id_images/slice_m_{i_sparse:04d}.npz', sparse_matrix_labelledNods, compressed=True)
+                scipy.sparse.save_npz(f'{out_path}{series_id}/consensus_masks/slice_{i_sparse:04d}.npz', sparse_matrix_one_segmentation_consensus, compressed=True)
+                scipy.sparse.save_npz(f'{out_path}{series_id}/maxvol_masks/slice_m_{i_sparse:04d}.npz', sparse_matrix_one_segmentation_maxvol, compressed=True)
+                scipy.sparse.save_npz(f'{out_path}{series_id}/cluster_id_images/slice_m_{i_sparse:04d}.npz', sparse_matrix_labelledNods, compressed=True)
 
 if __name__ == '__main__':
     main()
