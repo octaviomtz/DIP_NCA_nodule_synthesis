@@ -26,7 +26,7 @@ def main(cfg: DictConfig):
     # PATHS
     path_seg = f'{cfg.path_drive}seg-lungs-LUNA16/'
     data_dir = f'{path_orig}/{cfg.data_dir}'
-    out_path = f'{path_orig}/{cfg.out_path}'
+    # out_path = f'{path_orig}/{cfg.out_path}'
     # ff = os.listdir(path_scans)
 
     # df = pd.read_csv(f'{path_drive}annotations.csv')
@@ -38,8 +38,8 @@ def main(cfg: DictConfig):
 
     for each_subset in range(10):
         path_scans = f'{cfg.path_drive}/subsets/subset{each_subset}/'        
-        if not os.path.exists(out_path + f'subset{each_subset}'): 
-            os.makedirs(out_path + f'subset{each_subset}')
+        if not os.path.exists(cfg.out_path + f'subset{each_subset}'): 
+            os.makedirs(cfg.out_path + f'subset{each_subset}')
 
         subset_files = os.listdir(path_scans)
         subset_series_ids = np.unique(np.asarray([subset_files[ll][:-4:] for ll in range(len(subset_files))]))
@@ -76,8 +76,8 @@ def main(cfg: DictConfig):
 
             # save the segmented lungs
             numpyImage_segmented = numpyImage_normalized * (segment_lungs_resampled>0)
-            if not os.path.exists(f'{out_path}{series_id}/lungs_segmented'): os.makedirs(f'{out_path}{series_id}/lungs_segmented')
-            np.savez_compressed(f'{out_path}{series_id}/lungs_segmented/lungs_segmented.npz',numpyImage_segmented)
+            if not os.path.exists(f'{cfg.out_path}{series_id}/lungs_segmented'): os.makedirs(f'{cfg.out_path}{series_id}/lungs_segmented')
+            np.savez_compressed(f'{cfg.out_path}{series_id}/lungs_segmented/lungs_segmented.npz',numpyImage_segmented)
 
             # go through all candidates that are in this image
             # sort to make sure we have all the trues (for prototyping only)
@@ -178,18 +178,18 @@ def main(cfg: DictConfig):
             one_segmentation_maxvol_resampled = resample_scan_sitk(one_segmentation_maxvol, numpySpacing, numpyImage_shape, new_spacing, sitk.sitkNearestNeighbor)
             labelledNods_resampled = resample_scan_sitk(labelledNods, numpySpacing, numpyImage_shape, new_spacing, sitk.sitkNearestNeighbor)
 
-            if not os.path.exists(f'{out_path}{series_id}/consensus_masks'): os.makedirs(f'{out_path}{series_id}/consensus_masks')
-            if not os.path.exists(f'{out_path}{series_id}/maxvol_masks'): os.makedirs(f'{out_path}{series_id}/maxvol_masks')
-            if not os.path.exists(f'{out_path}{series_id}/cluster_id_images'): os.makedirs(f'{out_path}{series_id}/cluster_id_images')
+            if not os.path.exists(f'{cfg.out_path}{series_id}/consensus_masks'): os.makedirs(f'{cfg.out_path}{series_id}/consensus_masks')
+            if not os.path.exists(f'{cfg.out_path}{series_id}/maxvol_masks'): os.makedirs(f'{cfg.out_path}{series_id}/maxvol_masks')
+            if not os.path.exists(f'{cfg.out_path}{series_id}/cluster_id_images'): os.makedirs(f'{cfg.out_path}{series_id}/cluster_id_images')
 
             for i_sparse, (one_seg_consen, one_seg_max, labelNods) in enumerate(zip(one_segmentation_consensus_resampled, one_segmentation_maxvol_resampled, labelledNods_resampled)):
                 sparse_matrix_one_segmentation_consensus = scipy.sparse.csc_matrix(one_seg_consen)
                 sparse_matrix_one_segmentation_maxvol = scipy.sparse.csc_matrix(one_seg_max)
                 sparse_matrix_labelledNods = scipy.sparse.csc_matrix(labelNods)
 
-                scipy.sparse.save_npz(f'{out_path}{series_id}/consensus_masks/slice_{i_sparse:04d}.npz', sparse_matrix_one_segmentation_consensus, compressed=True)
-                scipy.sparse.save_npz(f'{out_path}{series_id}/maxvol_masks/slice_m_{i_sparse:04d}.npz', sparse_matrix_one_segmentation_maxvol, compressed=True)
-                scipy.sparse.save_npz(f'{out_path}{series_id}/cluster_id_images/slice_m_{i_sparse:04d}.npz', sparse_matrix_labelledNods, compressed=True)
+                scipy.sparse.save_npz(f'{cfg.out_path}{series_id}/consensus_masks/slice_{i_sparse:04d}.npz', sparse_matrix_one_segmentation_consensus, compressed=True)
+                scipy.sparse.save_npz(f'{cfg.out_path}{series_id}/maxvol_masks/slice_m_{i_sparse:04d}.npz', sparse_matrix_one_segmentation_maxvol, compressed=True)
+                scipy.sparse.save_npz(f'{cfg.out_path}{series_id}/cluster_id_images/slice_m_{i_sparse:04d}.npz', sparse_matrix_labelledNods, compressed=True)
 
 if __name__ == '__main__':
     main()

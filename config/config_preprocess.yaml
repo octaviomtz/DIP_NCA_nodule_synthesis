@@ -1,4 +1,4 @@
 path_drive: '/content/drive/MyDrive/Datasets/LUNA16/'
 data_dir: 'data/'
-out_path: 'candidates_process_lungs_and_segm/'
+out_path: '/content/drive/MyDrive/Datasets/LUNA16/preprocessed_candidates/'
 skip_previous: -1

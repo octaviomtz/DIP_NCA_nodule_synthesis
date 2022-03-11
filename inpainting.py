@@ -43,8 +43,7 @@ def main(cfg: DictConfig):
     log.info(OmegaConf.to_yaml(cfg))
     path_orig = hydra.utils.get_original_cwd()
     # PATHS
-    path_data = f'{path_orig}{cfg.path_data}'
-    ids = os.listdir(path_data)
+    ids = os.listdir(cfg.path_data)
     ids = np.sort(ids)
     global i
     i = 0
@@ -76,7 +75,7 @@ def main(cfg: DictConfig):
         if idx_name < cfg.SKIP_IDX: continue
         print('idx_name: ', idx_name)
 
-        vol, mask_maxvol, mask_consensus, mask_lungs = read_slices3D_v4(path_data, cfg.path_seg, name)
+        vol, mask_maxvol, mask_consensus, mask_lungs = read_slices3D_v4(cfg.path_data, cfg.path_seg, name)
         maxvol0 = np.where(mask_maxvol==1)
         mask_maxvol_and_lungs = deepcopy(mask_lungs)
         mask_maxvol_and_lungs[maxvol0] = 0

@@ -15,25 +15,23 @@ from utils.get_ndls_from_inpain import (normalizePatches, load_resampled_image,
                                         qualitative_evaluation_image2, denormalizePatches,
                                         put_inpainted_in_resampled_image,
                                         get_cubes_for_gan)
-
-path_source = f'/data/OMM/Datasets/LUNA/'
-path_data = f'/data/OMM/Datasets/LUNA/candidates/'
-path_inpainting_done = '/data/OMM/project results/Feb 5 19 - Deep image prior/dip luna v1/arrays/' # previosu
-path_inpainting_done = '/data/OMM/project results/Feb 5 19 - Deep image prior/dip luna v2/arrays/' # new
+#%%
+path_seg = '/content/drive/MyDrive/Datasets/LUNA16/seg-lungs-LUNA16/'
+path_anotations = '/content/drive/MyDrive/Datasets/LUNA16/annotations/annotations.csv'
+path_inpainting_done = '/content/drive/MyDrive/Datasets/LUNA16/inpainted_nodules/'
 path_last = f'{path_inpainting_done}last/'
 path_orig = f'{path_inpainting_done}orig/'
 path_masks = f'{path_inpainting_done}masks/'
 path_mask_nodules = f'{path_inpainting_done}masks nodules/'
 path_boxes_coords = f'{path_inpainting_done[:-7]}box_coords/'
-path_dest = '/data/OMM/Datasets/LIDC_other_formats/LUNA_inpainted_cubes_for_GAN_v1/' # previous
-path_dest = '/data/OMM/Datasets/LIDC_other_formats/LUNA_inpainted_cubes_for_GAN_v2/' # new
-path_qualitative_evaluation = f'{path_dest}versions2D/qualitative assessment/'
-path_seg = '/data/OMM/Datasets/LUNA/seg-lungs-LUNA16/'
+path_dest = '/content/drive/MyDrive/Datasets/LUNA16/inpainted_cubes_for_synthesis/'
+# path_qualitative_evaluation = f'{path_dest}versions2D/qualitative assessment/'
 ff = os.listdir(path_last)
 ff = np.sort(ff)
-
-df = pd.read_csv('/data/datasets/LIDC-IDRI/annotations.csv')
-
+print(len(ff))
+df = pd.read_csv(path_anotations)
+df.shape
+#%%
 name_previous = 'no.one'
 for idf, f in enumerate(ff):
 #     iii=0
@@ -67,7 +65,7 @@ for idf, f in enumerate(ff):
         f_name = f'{f[:-4]}_{name_coords_in_scan}.raw'
         assert np.shape(cube_orig) == (64, 64, 64) and np.shape(cube_inpain) == (64, 64, 64) and np.shape(mask_ndl) == (64, 64, 64)
         # qualitative evaluation
-        qualitative_evaluation_image2(cube_orig[31], cube_inpain[31], mask_ndl[31], path_qualitative_evaluation, f_name)
+        # qualitative_evaluation_image2(cube_orig[31], cube_inpain[31], mask_ndl[31], path_qualitative_evaluation, f_name)
         # denormalize to save in more convenient format 
         cube_orig = denormalizePatches(cube_orig)
         cube_inpain = denormalizePatches(cube_inpain)
