@@ -46,12 +46,29 @@ python inpainting.py
 + arrays/masks_lungs/{id_series}_{lungL/R}_{ndls_n}
 + box_coords/{id_series}_{lungL/R}_{ndls_n} (coords containing the ndl)
 ```
+<img src="figures_github/lungs_blocks.png" width="150" height="150" />
 
-#### TO DO Nodule synthesis with neural cellular automata
+#### 3. Get only the nodules from the (96x160x96) lung blocks
 ```bash
-pip install -r requirements.txt
-python neural_cellular_automata.py
+pip install -r requirements_develop.txt
+python get_ndl_from_inpainted.py
 ```
+```diff
+- INPUTS: (lung blocks of 96x160x96):
+- arrays/last
+- arrays/orig
+- arrays/masks
+- arrays/masks_nodules
+- arrays/masks_lungs
+- box_coords
++ OUTPUTS (cubes of size 64x64x64 centered on each nodule):
++ original (original image)
++ inpainted_inserted (nodule inpainted inserted into original image)
++ mask
++ nodule_info
+```
+![image_synthesis](figures_github/cubes_32_size.png?raw=true) 
+
 
 #### TO DO nodule growing with image-to-image translation (cycleGAN)
 ```bash

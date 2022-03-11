@@ -1,0 +1,7 @@
+path_data: '/content/drive/MyDrive/Datasets/LUNA16/preprocessed_candidates/' 
+path_seg: '/content/drive/MyDrive/Datasets/LUNA16/seg-lungs-LUNA16/'
+path_anotations: '/content/drive/MyDrive/Datasets/LUNA16/annotations/annotations.csv'
+path_inpainting_done: '/content/drive/MyDrive/Datasets/LUNA16/inpainted_nodules/arrays/'
+path_dest: '/content/drive/MyDrive/Datasets/LUNA16/inpainted_cubes_for_synthesis/'
+
+skip_idx: -1
