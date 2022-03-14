@@ -1,6 +1,7 @@
 path_seg: '/content/drive/MyDrive/Datasets/LUNA16/seg-lungs-LUNA16/'
 path_data: '/content/drive/MyDrive/Datasets/LUNA16/preprocessed_candidates/'
 path_img_dest: '/content/drive/MyDrive/Datasets/LUNA16/inpainted_nodules/'
+subset: 1
 
 PLOT: True
 SKIP_IDX: 11

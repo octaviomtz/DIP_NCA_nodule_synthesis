@@ -43,8 +43,19 @@ def main(cfg: DictConfig):
     log.info(OmegaConf.to_yaml(cfg))
     path_orig = hydra.utils.get_original_cwd()
     # PATHS
-    ids = os.listdir(cfg.path_data)
+    path_data = f'{cfg.path_data}subset{cfg.subset}/'
+    path_out = f'{cfg.path_img_dest}subset{cfg.subset}/'
+    ids = os.listdir(path_data)
     ids = np.sort(ids)
+    if not os.path.exists(f'{path_out}arrays/last/'): os.makedirs(f'{path_out}arrays/last/')
+    if not os.path.exists(f'{path_out}arrays/orig/'): os.makedirs(f'{path_out}arrays/orig/')
+    if not os.path.exists(f'{path_out}arrays/masks/'): os.makedirs(f'{path_out}arrays/masks/')
+    if not os.path.exists(f'{path_out}arrays/masks_nodules/'): os.makedirs(f'{path_out}arrays/masks_nodules/')
+    if not os.path.exists(f'{path_out}arrays/masks_lungs/'): os.makedirs(f'{path_out}arrays/masks_lungs/')
+    if not os.path.exists(f'{path_out}mse_error_curves_inpainting/'): os.makedirs(f'{path_out}mse_error_curves_inpainting/')
+    if not os.path.exists(f'{path_out}inpainting_times/'): os.makedirs(f'{path_out}inpainting_times/')
+    if not os.path.exists(f'{path_out}box_coords/'): os.makedirs(f'{path_out}box_coords/')
+
     global i
     i = 0
 
@@ -75,7 +86,7 @@ def main(cfg: DictConfig):
         if idx_name < cfg.SKIP_IDX: continue
         print('idx_name: ', idx_name)
 
-        vol, mask_maxvol, mask_consensus, mask_lungs = read_slices3D_v4(cfg.path_data, cfg.path_seg, name)
+        vol, mask_maxvol, mask_consensus, mask_lungs = read_slices3D_v4(path_data, cfg.path_seg, name)
         maxvol0 = np.where(mask_maxvol==1)
         mask_maxvol_and_lungs = deepcopy(mask_lungs)
         mask_maxvol_and_lungs[maxvol0] = 0
@@ -139,7 +150,7 @@ def main(cfg: DictConfig):
                 net_input_saved = net_input.detach().clone()
                 noise = net_input.detach().clone()
                 p = get_params(cfg.OPT_OVER, net, net_input)
-                mse_error, images_generated_all, best_iter, restart = optimize_ndls('adam', p, closure, LR, cfg.EPOCHS, cfg.show_every, cfg.path_img_dest, restart, annealing=True, lr_finder_flag=False)
+                mse_error, images_generated_all, best_iter, restart = optimize_ndls('adam', p, closure, LR, cfg.EPOCHS, cfg.show_every, path_out, restart, annealing=True, lr_finder_flag=False)
                 mse_error = np.squeeze(mse_error)
                 # mse_error = [i.detach().cpu().numpy() for i in mse_error]
                 # mse_error_all.append(mse_error)
@@ -149,9 +160,7 @@ def main(cfg: DictConfig):
                     LR /= 1.2
                 if restart_i == 30: # if the network cannot be trained continue (might not act on for loop!!)
                     continue
-            print('')
             #print(np.shape(images_generated_all))
-            print('')
             image_last = images_generated_all[-1] * block_lungs
             image_orig = img_np[0] * block_lungs
             best_iter = f'{best_iter:4d}'
@@ -159,19 +168,19 @@ def main(cfg: DictConfig):
             # convert into ints to occupy less space
             image_last = denormalizePatches(image_last)
             img_np = denormalizePatches(img_np)
-
             stop = time.time()
-            image_last.tofile(f'{cfg.path_img_dest}arrays/last/{name}_{block_name}.raw')
-            img_np.tofile(f'{cfg.path_img_dest}arrays/orig/{name}_{block_name}.raw')
-            np.savez_compressed(f'{cfg.path_img_dest}arrays/masks/{name}_{block_name}',block_maxvol_and_lungs)
-            np.savez_compressed(f'{cfg.path_img_dest}arrays/masks_nodules/{name}_{block_name}',block_mask)
-            np.savez_compressed(f'{cfg.path_img_dest}arrays/masks_lungs/{name}_{block_name}',block_lungs)
-            np.save(f'{cfg.path_img_dest}mse_error_curves_inpainting/{name}_{block_name}.npy',mse_error)
-            np.save(f'{cfg.path_img_dest}inpainting_times/{name}_{block_name}_{int(stop-start)}s.npy',stop-start)
-            np.save(f'{cfg.path_img_dest}box_coords/{name}_{block_name}.npy', box_coord)
+
+            image_last.tofile(f'{path_out}arrays/last/{name}_{block_name}.raw')
+            img_np.tofile(f'{path_out}arrays/orig/{name}_{block_name}.raw')
+            np.savez_compressed(f'{path_out}arrays/masks/{name}_{block_name}',block_maxvol_and_lungs)
+            np.savez_compressed(f'{path_out}arrays/masks_nodules/{name}_{block_name}',block_mask)
+            np.savez_compressed(f'{path_out}arrays/masks_lungs/{name}_{block_name}',block_lungs)
+            np.save(f'{path_out}mse_error_curves_inpainting/{name}_{block_name}.npy',mse_error)
+            np.save(f'{path_out}inpainting_times/{name}_{block_name}_{int(stop-start)}s.npy',stop-start)
+            np.save(f'{path_out}box_coords/{name}_{block_name}.npy', box_coord)
             # torch.save({'epoch': len(mse_error), 'model_state_dict': net.state_dict(),
             #    'LR': LR,'loss': mse_error, 'net_input_saved': net_input_saved}, 
-            #    f'{cfg.path_img_dest}v17v2_merged_clusters/models/{name}_{block_name}.pt')
+            #    f'{path_out}v17v2_merged_clusters/models/{name}_{block_name}.pt')
             del net, images_generated_all
 
 if __name__ == '__main__':
