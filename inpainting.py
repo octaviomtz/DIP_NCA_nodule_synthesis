@@ -83,7 +83,7 @@ def main(cfg: DictConfig):
 
     for idx_name, name in enumerate(ids):
 
-        if idx_name < cfg.SKIP_IDX: continue
+        if idx_name in cfg.SKIP_IDX: continue
         print('idx_name: ', idx_name)
 
         vol, mask_maxvol, mask_consensus, mask_lungs = read_slices3D_v4(path_data, cfg.path_seg, name)

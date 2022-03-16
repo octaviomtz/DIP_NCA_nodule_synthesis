@@ -1,10 +1,10 @@
 path_seg: '/content/drive/MyDrive/Datasets/LUNA16/seg-lungs-LUNA16/'
 path_data: '/content/drive/MyDrive/Datasets/LUNA16/preprocessed_candidates/'
 path_img_dest: '/content/drive/MyDrive/Datasets/LUNA16/inpainted_nodules/'
-subset: 1
+subset: 2
+SKIP_IDX: [11, 12, 13, 14, 15, 16, 17, 20, 23, 24, 25, 26, 27]
 
 PLOT: True
-SKIP_IDX: 11
 OPT_OVER: 'net'
 INPUT: 'noise'
 INPUT_DEPTH: 192
@@ -12,3 +12,4 @@ EPOCHS: 5001
 param_noise: True
 show_every: 500
 reg_noise_std: 0.3
+
