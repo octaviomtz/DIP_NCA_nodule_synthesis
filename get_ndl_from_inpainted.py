@@ -29,7 +29,7 @@ def main(cfg: DictConfig):
     path_orig = hydra.utils.get_original_cwd()
 
     for subset in range(10):
-        if cfg.subset in np.arange(10) and cfg.subset != subset: continue
+        if subset not in cfg.subset: continue
 
         # PATHS
         path_data = f'{cfg.path_data}subset{subset}/'

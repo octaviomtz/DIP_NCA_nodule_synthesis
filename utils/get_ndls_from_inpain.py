@@ -7,6 +7,8 @@ from copy import copy, deepcopy
 import pandas as pd
 import SimpleITK as sitk
 import pylidc as pl
+from scipy.ndimage import binary_dilation
+import matplotlib.cm as cm
 
 def median_center(segmentation, label = 1):
     z,y,x = np.where(segmentation == label)
@@ -282,3 +284,40 @@ def compare_lidc_coords(name_scan, coords_obtained, numpySpacing, df):
             df_to_return = df_annotations_scan_ndl
             break
     return df_to_return
+
+def plot_inpainting_quality_control(files, path_inser, path_orig, path_mask, text='', subset=-1, zoom = False, skip=0, save=False, my_cmap = cm.Wistia):
+    my_cmap.set_under('k', alpha=0)
+     
+    fig, ax = plt.subplots(6,12, figsize=(32,16))
+    for i in range(35):
+        inser = np.fromfile(f'{path_inser}{files[i]}',dtype='int16').astype('float32').reshape((64,64,64))
+        orig = np.fromfile(f'{path_orig}{files[i]}',dtype='int16').astype('float32').reshape((64,64,64))
+        mask = np.fromfile(f'{path_mask}{files[i]}',dtype='int16').astype('float32').reshape((64,64,64))
+        SLICE, SH0, SH1 = np.shape(orig)
+        SLICE= SLICE//2 - 1
+        mask2 = binary_dilation(mask[SLICE]) - mask[SLICE]
+        mask2 = np.ma.masked_where(mask2<.5, mask2)
+        
+        Z = SLICE//2 if zoom == True else 0
+        val_max = np.max(orig[SLICE][Z:SH0-Z,Z:SH1-Z])
+        val_min = np.min(orig[SLICE][Z:SH0-Z,Z:SH1-Z])
+        ax[(i//12)*2, i%12].imshow(orig[SLICE][Z:SH0-Z,Z:SH1-Z])
+        im = ax[(i//12)*2, i%12].imshow(mask2[Z:SH0-Z,Z:SH1-Z], cmap=my_cmap, 
+            interpolation='none', clim=[0.9, 1])
+        ax[(i//12)*2, i%12].text(4,4,i+skip, c='#FFA500', fontsize=14)
+        ax[(i//12)*2+1, i%12].imshow(inser[SLICE][Z:SH0-Z,Z:SH1-Z], vmin=val_min, vmax = val_max)
+        
+        ax[(i//12)*2, i%12].axis('off')
+        ax[(i//12)*2+1, i%12].axis('off')
+    
+    i+=1
+    ax[(i//12)*2, i%12].imshow(np.zeros_like(orig[SLICE][Z:SH0-Z,Z:SH1-Z]))
+    ax[(i//12)*2, i%12].text(3,15,text, c='#FFA500', fontsize=14)
+    ax[(i//12)*2+1, i%12].imshow(np.zeros_like(orig[SLICE][Z:SH0-Z,Z:SH1-Z]))
+    ax[(i//12)*2+1, i%12].text(3,15,f'subset: {subset}', c='#FFA500', fontsize=14)
+    ax[(i//12)*2, i%12].axis('off')
+    ax[(i//12)*2+1, i%12].axis('off')
+    fig.tight_layout()
+
+    if save:
+        plt.savefig(f'inpain_qc_subset{subset}_from_{skip}_temp.png')
