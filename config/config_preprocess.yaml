@@ -2,4 +2,4 @@ path_drive: '/content/drive/MyDrive/Datasets/LUNA16/'
 data_dir: 'data/'
 out_path: '/content/drive/MyDrive/Datasets/LUNA16/preprocessed_candidates/'
 skip_previous: -1
-only_subset: 7
+only_subset: [1,2,3,4]

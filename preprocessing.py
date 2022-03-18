@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import scipy
 from skimage.morphology import ball, dilation
+from time import time
 
 import SimpleITK as sitk
 import pylidc as pl 
@@ -37,10 +38,10 @@ def main(cfg: DictConfig):
     # df.head()
 
     for each_subset in range(10):
-        if each_subset != cfg.only_subset: continue
+        if each_subset not in cfg.only_subset: continue
         path_scans = f'{cfg.path_drive}/subsets/subset{each_subset}/'
         out_path_subset = cfg.out_path + f'subset{each_subset}/'
-        print(out_path_subset)
+        log.info(f'preprocessing subset{each_subset}')
         if not os.path.exists(out_path_subset): 
             os.makedirs(out_path_subset)
 
@@ -55,7 +56,9 @@ def main(cfg: DictConfig):
         for series_id_idx, series_id in tqdm(enumerate(subset_series_ids), total=len(subset_series_ids)):
             # skip already proprocessed files
             if series_id_idx < cfg.skip_previous: continue
-            
+            log.info(f'preprocessing: {series_id_idx}, {series_id}')
+            start = time()
+
             df_lidc_new = pd.DataFrame(columns=columns_plus_new_coords)
             df_cands_class1 = pd.DataFrame(columns=columns_plus_new_coords_class1)
             image_file = path_scans + series_id + '.mhd'
@@ -193,6 +196,9 @@ def main(cfg: DictConfig):
                 scipy.sparse.save_npz(f'{out_path_subset}{series_id}/consensus_masks/slice_{i_sparse:04d}.npz', sparse_matrix_one_segmentation_consensus, compressed=True)
                 scipy.sparse.save_npz(f'{out_path_subset}{series_id}/maxvol_masks/slice_m_{i_sparse:04d}.npz', sparse_matrix_one_segmentation_maxvol, compressed=True)
                 scipy.sparse.save_npz(f'{out_path_subset}{series_id}/cluster_id_images/slice_m_{i_sparse:04d}.npz', sparse_matrix_labelledNods, compressed=True)
+            
+            stop = time()
+            log.info(f'completed in {(stop-start)/60:.2f} mins')
 
 if __name__ == '__main__':
     main()
