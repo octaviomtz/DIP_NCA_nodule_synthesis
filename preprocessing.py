@@ -42,6 +42,7 @@ def main(cfg: DictConfig):
         path_scans = f'{cfg.path_drive}/subsets/subset{each_subset}/'
         out_path_subset = cfg.out_path + f'subset{each_subset}/'
         log.info(f'preprocessing subset{each_subset}')
+        log.info(f'output in: {out_path_subset}')
         if not os.path.exists(out_path_subset): 
             os.makedirs(out_path_subset)
 

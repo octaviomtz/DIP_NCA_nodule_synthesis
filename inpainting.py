@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 from copy import copy, deepcopy
-import time
+from time import time
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import pandas as pd
 from skimage import measure, morphology
@@ -45,6 +45,8 @@ def main(cfg: DictConfig):
     # PATHS
     path_data = f'{cfg.path_data}subset{cfg.subset}/'
     path_out = f'{cfg.path_img_dest}subset{cfg.subset}/'
+    log.info(f'preprocessing subset{cfg.subset}')
+    log.info(f'output in: {path_out}')
     ids = os.listdir(path_data)
     ids = np.sort(ids)
     if not os.path.exists(f'{path_out}arrays/last/'): os.makedirs(f'{path_out}arrays/last/')
@@ -84,7 +86,8 @@ def main(cfg: DictConfig):
     for idx_name, name in enumerate(ids):
 
         if idx_name in cfg.SKIP_IDX: continue
-        print('idx_name: ', idx_name)
+        log.info(f'inpainting: {idx_name}, {name}')
+        start = time()
 
         vol, mask_maxvol, mask_consensus, mask_lungs = read_slices3D_v4(path_data, cfg.path_seg, name)
         maxvol0 = np.where(mask_maxvol==1)
@@ -121,7 +124,6 @@ def main(cfg: DictConfig):
             restart = True
 
             while restart == True:
-                start = time.time()
                 print(f'training initialization {restart_i} with LR = {LR:.8f}')
                 restart_i += 1
 
@@ -168,7 +170,6 @@ def main(cfg: DictConfig):
             # convert into ints to occupy less space
             image_last = denormalizePatches(image_last)
             img_np = denormalizePatches(img_np)
-            stop = time.time()
 
             image_last.tofile(f'{path_out}arrays/last/{name}_{block_name}.raw')
             img_np.tofile(f'{path_out}arrays/orig/{name}_{block_name}.raw')
@@ -176,12 +177,16 @@ def main(cfg: DictConfig):
             np.savez_compressed(f'{path_out}arrays/masks_nodules/{name}_{block_name}',block_mask)
             np.savez_compressed(f'{path_out}arrays/masks_lungs/{name}_{block_name}',block_lungs)
             np.save(f'{path_out}mse_error_curves_inpainting/{name}_{block_name}.npy',mse_error)
-            np.save(f'{path_out}inpainting_times/{name}_{block_name}_{int(stop-start)}s.npy',stop-start)
+            # np.save(f'{path_out}inpainting_times/{name}_{block_name}_{int(stop-start)}s.npy',stop-start)
             np.save(f'{path_out}box_coords/{name}_{block_name}.npy', box_coord)
             # torch.save({'epoch': len(mse_error), 'model_state_dict': net.state_dict(),
             #    'LR': LR,'loss': mse_error, 'net_input_saved': net_input_saved}, 
             #    f'{path_out}v17v2_merged_clusters/models/{name}_{block_name}.pt')
             del net, images_generated_all
+        
+        stop = time()
+        log.info(f'completed in {(stop-start)/60:.2f} mins')
+
 
 if __name__ == '__main__':
     main()

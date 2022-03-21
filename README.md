@@ -13,7 +13,7 @@ Main steps of the study "Patient-Specific 3d Cellular Automata Nodule Growth Syn
 #### 1. Data preprocessing:
 ```bash
 pip install -r requirements_develop.txt
-python process_lungs_and_segmentations.py
+python preprocessing.py
 ```
 ```diff
 - INPUTS:
@@ -48,7 +48,7 @@ python inpainting.py
 ```
 <img src="figures_github/lungs_blocks.png" width="150" height="150" />
 
-#### 3. Get only the nodules from the (96x160x96) lung blocks
+#### 3. Get only 64^3 blocks around the nodules from the (96x160x96) lung blocks
 ```bash
 pip install -r requirements_develop.txt
 python get_ndl_from_inpainted.py
@@ -69,6 +69,12 @@ python get_ndl_from_inpainted.py
 ```
 ![image_synthesis](figures_github/cubes_32_size.png?raw=true) 
 
+#### 3.1. To check nodule inpainting results: 
+```bash
+pip install -r requirements_develop.txt
+python utils/plot_inpainting_quality_control.py
+```
+![inpainting_QC](figures_github/inpain_qc_subset1_from_36.png?raw=true) 
 
 #### TO DO nodule growing with image-to-image translation (cycleGAN)
 ```bash

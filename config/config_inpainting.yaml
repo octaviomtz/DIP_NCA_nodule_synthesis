@@ -1,8 +1,9 @@
 path_seg: '/content/drive/MyDrive/Datasets/LUNA16/seg-lungs-LUNA16/'
 path_data: '/content/drive/MyDrive/Datasets/LUNA16/preprocessed_candidates/'
 path_img_dest: '/content/drive/MyDrive/Datasets/LUNA16/inpainted_nodules/'
-subset: 2
-SKIP_IDX: [11, 12, 13, 14, 15, 16, 17, 20, 23, 24, 25, 26, 27]
+subset: 3
+SKIP_IDX: [-1]
+# SKIP_IDX: [0,1,2,3,4,5,6,7,8,9, 10,11,12,13,14,15,16,17,18,19, 20,21,22,23,24,25]
 
 PLOT: True
 OPT_OVER: 'net'
