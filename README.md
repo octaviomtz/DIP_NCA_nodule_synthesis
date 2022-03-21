@@ -69,7 +69,7 @@ python get_ndl_from_inpainted.py
 ```
 ![image_synthesis](figures_github/cubes_32_size.png?raw=true) 
 
-#### 3.1. To check nodule inpainting results: 
+#### 3.1. (Optional) To check nodule inpainting results: 
 ```bash
 pip install -r requirements_develop.txt
 python utils/plot_inpainting_quality_control.py

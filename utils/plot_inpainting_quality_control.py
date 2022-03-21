@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.ndimage import binary_dilation
 import matplotlib.cm as cm
-from get_ndls_from_inpain import plot_inpainting_quality_control
+from utils.cube_around_inpainted_ndl import plot_inpainting_quality_control
 
 SUBSET = 1
 path_inpainted_parent = '/content/drive/MyDrive/Datasets/LUNA16/inpainted_cubes_for_synthesis/'

@@ -13,7 +13,7 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 import logging
 
-from utils.get_ndls_from_inpain import (normalizePatches, load_resampled_image,
+from utils.cube_around_inpainted_ndl import (normalizePatches, load_resampled_image,
                                         load_inpainted_images, get_smaller_versions,
                                         get_the_block_from_the_resampled_image,
                                         load_itk_image, compare_lidc_coords,
@@ -21,7 +21,7 @@ from utils.get_ndls_from_inpain import (normalizePatches, load_resampled_image,
                                         put_inpainted_in_resampled_image,
                                         get_cubes_for_gan)
 
-@hydra.main(config_path="config", config_name="config_ndl_from_inpain.yaml")
+@hydra.main(config_path="config", config_name="config_cube_around_inpainted_ndl.yaml")
 def main(cfg: DictConfig):
     # HYDRA
     log = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ def main(cfg: DictConfig):
         if not os.path.exists(f'{path_dest}original/'): os.makedirs(f'{path_dest}original/')
         if not os.path.exists(f'{path_dest}inpainted_inserted/'): os.makedirs(f'{path_dest}inpainted_inserted/')
         if not os.path.exists(f'{path_dest}mask/'): os.makedirs(f'{path_dest}mask/')
-        
+        log.info(f'results in: {path_dest}')
         files = os.listdir(path_last)
         files = np.sort(files)
         print('files_to_process:', len(files))
@@ -54,7 +54,7 @@ def main(cfg: DictConfig):
         name_previous = 'no.one'
         for idf, f in tqdm(enumerate(files), total=len(files)):
             if idf < cfg.skip_idx: continue
-
+            log.info(f'working on: {idf}, {f}')
             last, orig, masks, mask_nodules, inserted, ndls_centers_block = load_inpainted_images(f, path_last, path_orig, path_masks, path_mask_nodules)
             inserted = normalizePatches(inserted)
             lungs, ndls_centers, mask = load_resampled_image(f, path_data)
