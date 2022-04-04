@@ -51,7 +51,7 @@ python inpainting.py
 #### 3. Get only 64^3 blocks around the nodules from the (96x160x96) lung blocks
 ```bash
 pip install -r requirements_develop.txt
-python get_ndl_from_inpainted.py
+python cube_around_inpainted_ndl.py
 ```
 ```diff
 - INPUTS: (lung blocks of 96x160x96):

@@ -30,6 +30,7 @@ def main(cfg: DictConfig):
 
     for subset in range(10):
         if subset not in cfg.subset: continue
+        log.info(f'cube subset{subset}')
 
         # PATHS
         path_data = f'{cfg.path_data}subset{subset}/'
@@ -39,6 +40,7 @@ def main(cfg: DictConfig):
         path_mask_nodules = f'{cfg.path_inpainted}subset{subset}/arrays/masks_nodules/'
         path_boxes_coords = f'{cfg.path_inpainted}subset{subset}/box_coords/'
         path_dest = f'{cfg.path_dest}subset{subset}/'
+        log.info(f'output in: {path_dest}')
         # path_qualitative_evaluation = f'{path_dest}versions2D/qualitative assessment/'
         if not os.path.exists(f'{path_dest}lidc_info/'): os.makedirs(f'{path_dest}lidc_info/')
         if not os.path.exists(f'{path_dest}original/'): os.makedirs(f'{path_dest}original/')

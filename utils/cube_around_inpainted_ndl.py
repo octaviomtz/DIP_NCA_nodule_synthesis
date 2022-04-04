@@ -321,3 +321,12 @@ def plot_inpainting_quality_control(files, path_inser, path_orig, path_mask, tex
 
     if save:
         plt.savefig(f'inpain_qc_subset{subset}_from_{skip}_temp.png')
+
+def get_raw_nodule(path_data, file):
+    path_orig = f'{path_data}original/'
+    path_mask = f'{path_data}mask/'
+    path_last = f'{path_data}inpainted_inserted/'
+    orig = np.fromfile(f'{path_orig}{file}',dtype='int16').astype('float32').reshape((64,64,64))
+    mask = np.fromfile(f'{path_mask}{file}',dtype='int16').astype('float32').reshape((64,64,64))
+    last = np.fromfile(f'{path_last}{file}',dtype='int16').astype('float32').reshape((64,64,64))        
+    return last, orig, mask

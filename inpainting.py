@@ -45,7 +45,7 @@ def main(cfg: DictConfig):
     # PATHS
     path_data = f'{cfg.path_data}subset{cfg.subset}/'
     path_out = f'{cfg.path_img_dest}subset{cfg.subset}/'
-    log.info(f'preprocessing subset{cfg.subset}')
+    log.info(f'inpainting subset{cfg.subset}')
     log.info(f'output in: {path_out}')
     ids = os.listdir(path_data)
     ids = np.sort(ids)
@@ -85,7 +85,7 @@ def main(cfg: DictConfig):
 
     for idx_name, name in enumerate(ids):
 
-        if idx_name in cfg.SKIP_IDX: continue
+        if idx_name < cfg.SKIP_IDX: continue
         log.info(f'inpainting: {idx_name}, {name}')
         start = time()
 
