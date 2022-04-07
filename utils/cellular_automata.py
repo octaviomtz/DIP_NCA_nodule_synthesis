@@ -10,10 +10,14 @@ import requests
 import io
 import matplotlib.pyplot as plt
 import numpy as np
-
+from copy import copy
 from scipy.ndimage import label
 from scipy.ndimage import distance_transform_bf
 from scipy.spatial import distance
+from typing import Tuple, List
+import torch
+
+from utils.preprocess import normalizePatches
 
 def to_rgb(x):
     rgb, alpha = x[...,:3], np.clip(x[...,3:4],0,1)
@@ -85,19 +89,23 @@ def imread(url, max_size=None, mode=None):
     return img
 
 def largest_distance(ndl):
+    '''find the pair of points that are the farthest from each other'''
     aa = np.squeeze(ndl)
     zz,yy,xx = np.where(aa > 0)
     point_cloud = np.asarray([zz,yy,xx]).T
-    Y = distance.cdist(point_cloud,point_cloud)
+    Y = distance.cdist(point_cloud,point_cloud, 'euclidean')
     max_dist, _ = np.where(Y==np.max(Y))
+    max_dist_idx = np.where(max_dist==np.max(max_dist))[0][0]
     max_dist[0], max_dist[1]
     coord1 = point_cloud[max_dist[0]]
-    coord2 = point_cloud[max_dist[1]]
+    coord2 = point_cloud[max_dist[max_dist_idx]]
     return coord1, coord2
 
-def get_center_of_volume_from_largest_component_return_center_or_extremes(vol, ndl, extreme=0, coord='coord1'):
-    '''get largest component and calculate center of irregular volume using distance transform and
-    return those coords'''
+def get_center_of_volume_from_largest_component_return_center_or_extremes(vol,extreme=0, coord='coord1'):
+    '''1. get the largest connected component then calculate:
+    2. the coords of the center of the irregular volume using distance transform or 
+    3. one of the pair of points with the largest distance from each other
+    4. return the coords selected '''
     assert (extreme==0 or extreme==1)
     # get largest component
     mask_multiple, cc_num = label(vol > 0)
@@ -110,13 +118,29 @@ def get_center_of_volume_from_largest_component_return_center_or_extremes(vol, n
         center_z,center_y,center_x = np.where(center_volume == np.max(center_volume))
         center_z,center_y,center_x = center_z[0],center_y[0],center_x[0]
     if extreme == 1:
-        coord1, coord2 = largest_distance(ndl)
+        coord1, coord2 = largest_distance(comp_largest)
         if coord == 'coord2':
             center_z,center_y,center_x = coord2
         else:
             center_z,center_y,center_x = coord1
 
     return center_z,center_y,center_x
+
+def crop_only_nodule(mask: str, orig: np.ndarray) -> Tuple[float, List[str]]:
+    ''' return crop of only the nodule, set the rest to zero'''
+    z,y,x = np.where(mask==0)
+    ndl_only = copy(orig)
+    ndl_only[z,y,x]=0
+    # crop only the nodule
+    z,y,x = np.where(mask==1)
+    z_min = int(np.min(z)); z_max = int(np.max(z))
+    y_min = int(np.min(y)); y_max = int(np.max(y))
+    x_min = int(np.min(x)); x_max = int(np.max(x))
+
+    coords = [z_min, z_max, y_min, y_max, x_min, x_max]
+    ndl_only = ndl_only[z_min:z_max+1, y_min:y_max+1, x_min:x_max+1]
+
+    return ndl_only, coords
 
 def fig_loss_and_synthesis(imgs_syn, losses, EPOCHS, save=False):
     fig = plt.figure(figsize=(24,8))
@@ -136,3 +160,36 @@ def fig_loss_and_synthesis(imgs_syn, losses, EPOCHS, save=False):
     ax2.tick_params(axis='x', labelsize=14)
     ax2.tick_params(axis='y', labelsize=14)
     plt.show()
+
+def get_raw_nodule(path_data: str, ndl: str):
+    last = np.fromfile(f'{path_data}inpainted_inserted/{ndl}',dtype='int16').astype('float32').reshape((64,64,64))
+    last = normalizePatches(last)
+    orig = np.fromfile(f'{path_data}original/{ndl}',dtype='int16').astype('float32').reshape((64,64,64))
+    orig = normalizePatches(orig)
+    mask = np.fromfile(f'{path_data}mask/{ndl}',dtype='int16').astype('int16').reshape((64,64,64))
+
+    # SLICE = 31
+    # fig, ax = plt.subplots(2,3)
+    # ax[0,0].imshow(last[SLICE])
+    # ax[0,1].imshow(orig[SLICE])
+    # ax[0,2].imshow(mask[SLICE])
+    # ax[1,0].hist(last[SLICE].flatten());
+    # ax[1,1].hist(orig[SLICE].flatten());
+    # ax[1,2].hist(mask[SLICE].flatten());
+    # plt.savefig('fig_temp.png')
+    return last, orig, mask
+
+def perchannel_conv(x, filters):
+    '''filters: [filter_n, h, w]'''
+    b, ch, z, h, w = x.shape
+    y = x.reshape(b*ch, 1, z, h, w)
+    y = torch.nn.functional.pad(y, [1, 1, 1, 1, 1, 1], 'constant')
+    y = torch.nn.functional.conv3d(y, filters[:,None])
+    return y.reshape(b, -1, z, h, w)
+
+def perception(x, device, *filters):
+    filters = torch.stack([*filters])
+    # filters = torch.stack([ident, sobel_x, sobel_x.T, lap])
+    filters = filters.to(device)
+    # print('x & filters', x.is_cuda , filters.is_cuda )
+    return perchannel_conv(x, filters)

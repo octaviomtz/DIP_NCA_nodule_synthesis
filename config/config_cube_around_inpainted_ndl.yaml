@@ -3,5 +3,5 @@ path_seg: '/content/drive/MyDrive/Datasets/LUNA16/seg-lungs-LUNA16/'
 path_anotations: '/content/drive/MyDrive/Datasets/LUNA16/annotations/annotations.csv'
 path_inpainted: '/content/drive/MyDrive/Datasets/LUNA16/inpainted_nodules/'
 path_dest: '/content/drive/MyDrive/Datasets/LUNA16/inpainted_cubes_for_synthesis/'
-subset: [2]
+subset: [8,9]
 skip_idx: -1
