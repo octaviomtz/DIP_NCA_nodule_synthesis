@@ -5,4 +5,8 @@ SEED_INIT: 0.5
 EPOCHS: 1000
 ITER_SYNTHESIS: 100
 ITER_CA: 60
-SKIP_IDX: -1
+SKIP_IDX: 124
+CHUNKS: 4
+LR: 1e-3 #1e-3
+lr_sched_steps: [300, 600, 900] # [2000, 4000, 6000]
+lr_sched_factor: 0.3

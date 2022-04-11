@@ -2,12 +2,14 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
+from torch.utils.checkpoint import checkpoint_sequential
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from copy import copy
 from typing import Tuple, List
 import os
 from time import time
+import subprocess
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
@@ -53,6 +55,7 @@ def main(cfg: DictConfig):
     # HYDRA
     log = logging.getLogger(__name__)
     log.info(OmegaConf.to_yaml(cfg))
+    log.info(subprocess.check_output('nvidia-smi', encoding='utf-8'))
     path_orig = hydra.utils.get_original_cwd()
     # PATHS
     path_data = f'{cfg.path_data}subset{cfg.SUBSET}/'
@@ -65,10 +68,10 @@ def main(cfg: DictConfig):
         log.info(f'cellular_automata: {idx_name}, {ndl}')
         start = time()
 
-        if idx_name ==50: break
+        # if idx_name ==45: break
         
         last, orig, mask = get_raw_nodule(path_data, ndl)
-        ndl_only, ndl_only_coords = crop_only_nodule(mask, orig)
+        ndl_only, ndl_only_coords = crop_only_nodule(mask, orig, expand=0)
         center_z, center_y, center_x = get_center_of_volume_from_largest_component_return_center_or_extremes(mask)
 
         # Minimalistic Neural CA
@@ -89,9 +92,9 @@ def main(cfg: DictConfig):
 
         ca = CA(ident, sobel_x, lap, device)
         ca = ca.to(device)
-        opt = torch.optim.Adam(ca.parameters(), 1e-3)
-        lr_sched = torch.optim.lr_scheduler.MultiStepLR(opt, [2000, 4000, 6000], 0.3)
-        scheduler = torch.optim.lr_scheduler.ExponentialLR(opt, 0.9999)
+        opt = torch.optim.Adam(ca.parameters(), cfg.LR)
+        scheduler1 = torch.optim.lr_scheduler.MultiStepLR(opt, cfg.lr_sched_steps, cfg.lr_sched_factor)
+        scheduler2 = torch.optim.lr_scheduler.ExponentialLR(opt, 0.9999)
 
         target = torch.from_numpy(ndl_only)
         target_alpha = (target>0)*1.
@@ -105,14 +108,15 @@ def main(cfg: DictConfig):
             x = seed
             for i in range(cfg.ITER_CA):
                 x = ca(x)
-            # x = torch.moveaxis(x, 1, -1)
+            # x = checkpoint_sequential([ca]*cfg.ITER_CA, cfg.CHUNKS, x)
             loss = F.mse_loss(x[:, :2, ...], target)
             loss.backward()
             losses.append(loss.detach().cpu().numpy())
             for p in ca.parameters():
                 p.grad /= (p.grad.norm()+1e-8)
             opt.step()
-            scheduler.step()
+            scheduler1.step()
+            # scheduler2.step()
         stop = time()
 
         # 5. GET TRAINED IMAGES

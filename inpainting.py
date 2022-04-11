@@ -43,9 +43,9 @@ def main(cfg: DictConfig):
     log.info(OmegaConf.to_yaml(cfg))
     path_orig = hydra.utils.get_original_cwd()
     # PATHS
-    path_data = f'{cfg.path_data}subset{cfg.subset}/'
-    path_out = f'{cfg.path_img_dest}subset{cfg.subset}/'
-    log.info(f'inpainting subset{cfg.subset}')
+    path_data = f'{cfg.path_data}subset{cfg.SUBSET}/'
+    path_out = f'{cfg.path_img_dest}subset{cfg.SUBSET}/'
+    log.info(f'inpainting subset{cfg.SUBSET}')
     log.info(f'output in: {path_out}')
     ids = os.listdir(path_data)
     ids = np.sort(ids)

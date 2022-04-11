@@ -126,7 +126,7 @@ def get_center_of_volume_from_largest_component_return_center_or_extremes(vol,ex
 
     return center_z,center_y,center_x
 
-def crop_only_nodule(mask: str, orig: np.ndarray) -> Tuple[float, List[str]]:
+def crop_only_nodule(mask: str, orig: np.ndarray, expand=0) -> Tuple[float, List[str]]:
     ''' return crop of only the nodule, set the rest to zero'''
     z,y,x = np.where(mask==0)
     ndl_only = copy(orig)
@@ -136,6 +136,13 @@ def crop_only_nodule(mask: str, orig: np.ndarray) -> Tuple[float, List[str]]:
     z_min = int(np.min(z)); z_max = int(np.max(z))
     y_min = int(np.min(y)); y_max = int(np.max(y))
     x_min = int(np.min(x)); x_max = int(np.max(x))
+    if expand != 0:
+        z_min = z_min - expand
+        y_min = y_min - expand
+        x_min = x_min - expand
+        z_max = z_max + expand
+        y_max = y_max + expand
+        x_max = x_max + expand
 
     coords = [z_min, z_max, y_min, y_max, x_min, x_max]
     ndl_only = ndl_only[z_min:z_max+1, y_min:y_max+1, x_min:x_max+1]

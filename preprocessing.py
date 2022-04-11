@@ -38,7 +38,7 @@ def main(cfg: DictConfig):
     # df.head()
 
     for each_subset in range(10):
-        if each_subset not in cfg.only_subset: continue
+        if each_subset not in cfg.SUBSET: continue
         path_scans = f'{cfg.path_drive}/subsets/subset{each_subset}/'
         out_path_subset = cfg.out_path + f'subset{each_subset}/'
         log.info(f'preprocessing subset{each_subset}')
@@ -56,7 +56,7 @@ def main(cfg: DictConfig):
 
         for series_id_idx, series_id in tqdm(enumerate(subset_series_ids), total=len(subset_series_ids)):
             # skip already proprocessed files
-            if series_id_idx < cfg.skip_previous: continue
+            if series_id_idx < cfg.SKIP_IDX: continue
             log.info(f'preprocessing: {series_id_idx}, {series_id}')
             start = time()
 

@@ -12,6 +12,7 @@ Main steps of the study "Patient-Specific 3d Cellular Automata Nodule Growth Syn
 
 #### 1. Data preprocessing:
 ```bash
+# select SUBSET and sample (SKIP_IDX) from where to start in config/config_preprocessing.yaml
 pip install -r requirements_develop.txt
 python preprocessing.py
 ```
@@ -31,6 +32,7 @@ python preprocessing.py
 #### 2. Nodule inpainting with deep image prior
 Performs inpaiting on lung nodules on lung blocks (96x160x96) using 2D convolutions
 ```bash
+# select SUBSET and sample (SKIP_IDX) from where to start in config/config_inpainting.yaml
 pip install -r requirements_inpainting.txt
 python inpainting.py
 ```
@@ -50,6 +52,7 @@ python inpainting.py
 
 #### 3. Get only 64^3 blocks around the nodules from the (96x160x96) lung blocks
 ```bash
+# select SUBSET and sample (SKIP_IDX) from where to start (config/config_cube_around_inpainted_ndl.yaml)
 pip install -r requirements_develop.txt
 python cube_around_inpainted_ndl.py
 ```
@@ -61,7 +64,7 @@ python cube_around_inpainted_ndl.py
 - arrays/masks_nodules
 - arrays/masks_lungs
 - box_coords
-+ OUTPUTS (cubes of size 64x64x64 centered on each nodule):
++ OUTPUTS (cubes of size 64x64x64):
 + original (original image)
 + inpainted_inserted (nodule inpainted inserted into original image)
 + mask
@@ -75,6 +78,21 @@ pip install -r requirements_develop.txt
 python utils/plot_inpainting_quality_control.py
 ```
 ![inpainting_QC](figures_github/inpain_qc_subset1_from_36.png?raw=true) 
+
+#### 4. Nodule synthesis  with cellular automata
+```bash
+# select SUBSET and sample (SKIP_IDX) from where to start (config/config_ca.yaml)
+pip install -r requirements_develop.txt
+python cellular automata.py
+```
+```diff
+- INPUTS (cubes of size 64x64x64):
+- original (original image)
+- mask
++ OUTPUTS (cubes of size 64x64x64):
++ 100 samples of nodule synthesis (the first ~60 can be used)
++ coordinates zyx from where the nodule was cropped 
+```
 
 #### TO DO nodule growing with image-to-image translation (cycleGAN)
 ```bash
