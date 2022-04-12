@@ -10,6 +10,7 @@ from typing import Tuple, List
 import os
 from time import time
 import subprocess
+from torch.cuda.amp import GradScaler, autocast
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
@@ -101,20 +102,27 @@ def main(cfg: DictConfig):
         target = torch.stack([target, target_alpha], dim=0)[None,...]
         target = target.to(device)
 
+        scaler = torch.cuda.amp.GradScaler()
+
         start = time()
         losses = []
         for ep in tqdm(range(cfg.EPOCHS)):
             opt.zero_grad()
             x = seed
-            for i in range(cfg.ITER_CA):
-                x = ca(x)
-            # x = checkpoint_sequential([ca]*cfg.ITER_CA, cfg.CHUNKS, x)
-            loss = F.mse_loss(x[:, :2, ...], target)
-            loss.backward()
+            with torch.cuda.amp.autocast():
+                for i in range(cfg.ITER_CA):
+                    x = ca(x)
+                # x = checkpoint_sequential([ca]*cfg.ITER_CA, cfg.CHUNKS, x)
+                loss = F.mse_loss(x[:, :2, ...], target)
+            scaler.scale(loss).backward()
             losses.append(loss.detach().cpu().numpy())
             for p in ca.parameters():
                 p.grad /= (p.grad.norm()+1e-8)
-            opt.step()
+            
+            scaler.step(opt)
+            scaler.update()
+            
+            # opt.step()
             scheduler1.step()
             # scheduler2.step()
         stop = time()

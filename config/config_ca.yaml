@@ -1,11 +1,11 @@
-SUBSET: 1
+SUBSET: 2
 path_data: '/content/drive/MyDrive/Datasets/LUNA16/inpainted_cubes_for_synthesis/'
 path_dest: '/content/drive/MyDrive/Datasets/LUNA16/synthesis_CA/'
 SEED_INIT: 0.5
 EPOCHS: 1000
 ITER_SYNTHESIS: 100
 ITER_CA: 60
-SKIP_IDX: 124
+SKIP_IDX: 133
 CHUNKS: 4
 LR: 1e-3 #1e-3
 lr_sched_steps: [300, 600, 900] # [2000, 4000, 6000]
