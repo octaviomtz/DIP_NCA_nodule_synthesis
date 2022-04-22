@@ -83,7 +83,7 @@ def main(cfg: DictConfig):
 
         SHZ, SHY, SHX = ndl_only.shape[0], ndl_only.shape[1], ndl_only.shape[2]
         pool = torch.zeros((256, 16, SHZ, SHY, SHX))
-        seed = np.zeros((1, 16, SHZ, SHY, SHX))
+        seed = np.zeros((cfg.BATCH_SIZE, 16, SHZ, SHY, SHX))
         c_crop_z = center_z - ndl_only_coords[0]
         c_crop_y = center_y - ndl_only_coords[2]
         c_crop_x = center_x - ndl_only_coords[4]
@@ -100,6 +100,7 @@ def main(cfg: DictConfig):
         target = torch.from_numpy(ndl_only)
         target_alpha = (target>0)*1.
         target = torch.stack([target, target_alpha], dim=0)[None,...]
+        target = target.repeat(cfg.BATCH_SIZE, 1, 1,1,1)
         target = target.to(device)
 
         scaler = torch.cuda.amp.GradScaler()

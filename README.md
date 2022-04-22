@@ -3,16 +3,17 @@ Main steps of the study "Patient-Specific 3d Cellular Automata Nodule Growth Syn
 
 ## Main steps
 1. LUNA16 Dataset Preprocessing
-1. Apply deep image prior on nodules (lungs blocks 96x160x96)
-1. Prepare dataset for GANs and pylidc characteristics 
-1. Get only the nodule
-1. Cellular Automata
+1. Nodule inpainting (on lungs blocks 96x160x96)
+1. Get 64^3 blocks around the nodules
+1. Nodule synthesys with Cellular Automata
 1. Insert CA generated nodule for nodule detection
 
 
 #### 1. Data preprocessing:
 ```bash
-# select SUBSET and sample (SKIP_IDX) from where to start in config/config_preprocessing.yaml
+# in config/config_preprocessing.yaml select:
+# input paths (LUNA16/subsets) & output paths (LUNA16/preprocessed_candidates)
+# SUBSET and sample (SKIP_IDX) from where to start 
 pip install -r requirements_develop.txt
 python preprocessing.py
 ```
@@ -32,7 +33,9 @@ python preprocessing.py
 #### 2. Nodule inpainting with deep image prior
 Performs inpaiting on lung nodules on lung blocks (96x160x96) using 2D convolutions
 ```bash
-# select SUBSET and sample (SKIP_IDX) from where to start in config/config_inpainting.yaml
+# in config/config_inpainting.yaml
+# input paths (LUNA16/preprocessed_candidates) & output paths (LUNA16/inpainted_nodules)
+# select SUBSET and sample (SKIP_IDX) from where to start
 pip install -r requirements_inpainting.txt
 python inpainting.py
 ```
@@ -52,7 +55,9 @@ python inpainting.py
 
 #### 3. Get only 64^3 blocks around the nodules from the (96x160x96) lung blocks
 ```bash
-# select SUBSET and sample (SKIP_IDX) from where to start (config/config_cube_around_inpainted_ndl.yaml)
+# in config/config_cube_around_inpainted_ndl.yaml select:
+# input paths (LUNA16/inpainted_nodules) & output paths (LUNA16/inpainted_cubes_for_synthesis)
+# select SUBSET and sample (SKIP_IDX) from where to start
 pip install -r requirements_develop.txt
 python cube_around_inpainted_ndl.py
 ```
@@ -81,7 +86,9 @@ python utils/plot_inpainting_quality_control.py
 
 #### 4. Nodule synthesis  with cellular automata
 ```bash
-# select SUBSET and sample (SKIP_IDX) from where to start (config/config_ca.yaml)
+# in config/config_ca.yaml select:
+# input paths (LUNA16/inpainted_cubes_for_synthesis) & output paths (LUNA16/synthesis_CA)
+# select SUBSET and sample (SKIP_IDX) from where to start
 pip install -r requirements_develop.txt
 python cellular automata.py
 ```
